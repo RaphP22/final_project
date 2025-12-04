@@ -273,3 +273,7 @@ ggplot(top_bottom,
   theme_minimal() +
   theme(legend.position = "top")
 ```
+
+
+
+on est la
