@@ -262,7 +262,7 @@ ggplot(top_bottom,
   geom_col() +
   geom_text(aes(label = `Décédés de moins d'un an (b)`), 
             hjust = -0.2, size = 3.5) +  
-  scale_fill_manual(values = c("Plus élevé" = "coral", "Plus faible" = "steelblue")) +
+  scale_fill_manual(values = c("Higher" = "coral", "Lower" = "steelblue")) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +  # Plus d'espace à droite
   coord_flip() +
   labs(title = "Death of less than 1y per department (2019)",
