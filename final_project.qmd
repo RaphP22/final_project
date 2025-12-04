@@ -8,7 +8,7 @@ format: html
 
 ### Github link
 
-Please find the github link [here](https://github.com/tomflachaire/Infant_mortality/tree/main).
+Please find the github link [here](https://github.com/RaphP22/final_project.git).
 
 ### Sources links
 
