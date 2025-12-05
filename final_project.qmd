@@ -102,7 +102,7 @@ infant_mortality <- read_csv2(
   ) %>%
   filter(!is.na(`Décédés de moins d'un an (b)`))  
 
-#We are deleting the ligns with no values.
+# We are deleting the lines with no values.
 
 # we exclude regional total since we care about departments.
 infant_mortality <- infant_mortality %>%
