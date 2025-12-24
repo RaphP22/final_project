@@ -41,6 +41,8 @@ Midwives RPPS 2012–2025 tracks the number and density of registered midwives a
 ### Basic information about each data file
 
 ```{r}
+#| message: false
+#| warning: false
 library(readr)
 library(dplyr)
 library(ggplot2)
@@ -86,7 +88,8 @@ We only kept data from 2019, the most recent year available before covid that co
 ### Data Preparation and Cleaning
 
 ```{r}
-
+#| message: false
+#| warning: false
 infant_mortality <- read_csv2(
   here("data/mortalite_infantile.csv"),
   skip = 4
@@ -130,6 +133,8 @@ Now let's clean the other databases.
 For indicateurs_generaux database :
 
 ```{r}
+#| message: false
+#| warning: false
 indicateurs_generaux <- read_csv2(
   here("data/indicateurs_population.csv"),
   skip = 3
@@ -153,6 +158,8 @@ indicateurs_generaux <- indicateurs_generaux %>%
 For situation_demographique database :
 
 ```{r}
+#| message: false
+#| warning: false
 situation_demo <- read_csv2(
   here("data/situation_demographique.csv"),
   skip = 4
