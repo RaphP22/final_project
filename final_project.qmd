@@ -12,15 +12,14 @@ Please find the github link [here](https://github.com/RaphP22/final_project).
 
 ### Sources links
 
-https://www.insee.fr/fr/statistiques/7624538?sommaire=7624746&utm_
-
-With this link, we downloaded :
+With this link, we downloaded : [here](https://www.insee.fr/fr/statistiques/7624538?sommaire=7624746&utm_)
 
 - P3D – Indicateurs généraux de la population par département et région - Séries depuis 1990;
 - P1D – Évolution générale de la situation démographique par département et région - Séries depuis 1990
 - P2D – Mortalité infantile par département et région - Séries depuis 1990.
 
-On the Data DREES website: https://data.drees.solidarites-sante.gouv.fr/explore/dataset/la-demographie-des-professionnels-de-sante-depuis-2012/information/
+On the Data DREES website : 
+[here](https://data.drees.solidarites-sante.gouv.fr/explore/dataset/la-demographie-des-professionnels-de-sante-depuis-2012/information/)
 
 We downloaded data on midwife demographics from 2012 to 2025.
 
