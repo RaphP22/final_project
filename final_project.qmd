@@ -50,24 +50,38 @@ library(here)
 ```
 
 ```{r}
-# Function to extract basic information
 get_data_info <- function(file_path) {
   data <- read.csv2(file_path)
-  list(
+  
+  cols_clean <- colnames(data)[!grepl("^X", colnames(data))]
+  
+  data.frame(
     Fichier = basename(file_path),
     Lignes = nrow(data),
     Colonnes = ncol(data),
-    Noms_des_colonnes = paste(colnames(data), collapse = ", ")
+    Colonnes_principales = paste(cols_clean, collapse = ", ")
   )
 }
 
-data_files <- list.files(path = "data/", pattern = "\\.csv$", full.names = TRUE)
-data_info <- lapply(data_files, get_data_info) 
-data_info_df <- do.call(rbind.data.frame, data_info) 
-rownames(data_info_df) <- NULL
+data_files <- list.files("data", pattern = "\\.csv$", full.names = TRUE)
+data_info_df <- do.call(rbind, lapply(data_files, get_data_info))
 
-# Display the result
-print(data_info_df)
+data_info_df <- data_info_df %>%
+  mutate(
+    Colonnes_principales = case_when(
+      Fichier == "indicateurs_population.csv" ~ "Indicateurs généraux de la population",
+      Fichier == "mortalite_infantile.csv" ~ "Mortalité infantile",
+      Fichier == "Sages-femmes_densité.csv" ~ "Densité des sages-femmes par département (2012–2025)",
+      Fichier == "Sages-femmes_effectif.csv" ~ "Effectifs des sages-femmes par département (2012–2025)",
+      Fichier == "situation_demographique.csv" ~ "Situation démographique générale",
+      TRUE ~ Colonnes_principales
+    )
+  )
+
+kable(
+  data_info_df,
+  caption = "Résumé des fichiers de données"
+)
 ```
 
 ### Research Question
