@@ -23,6 +23,9 @@ On the Data DREES website :
 
 We downloaded data on midwife demographics from 2012 to 2025.
 
+And with this link : https://www.insee.fr/fr/statistiques/6036902?sommaire=6036904
+We downloaded the data about median income and poverty rates per departments.
+
 Then, we moved them to csv files only keeping the year 2019, the last year available before COVID, which might affect the result.
 
 ### Description of the sources and important variables
@@ -253,6 +256,30 @@ midwives <- midwives %>%
   select(departement, effectif_2019, densite_2019)
 ```
 
+We import a dataset about the income and poverty rate per department in 2019.
+```{r}
+
+incomes <- read.csv2(
+  file = here("data/revenus_2019.csv"),
+  skip = 4,
+  header = TRUE,
+  stringsAsFactors = FALSE
+  )
+
+incomes <- incomes[-c(1, 100, 101, 102, 103), 1:9 ]
+
+cols_num <- 3:ncol(incomes)
+
+incomes[cols_num] <- lapply(incomes[cols_num], function(x) {
+  as.numeric(gsub(",", ".", x))
+})
+
+
+
+## We don't keep the first 4th lign and neither the 6th because it's the 5th lign which has the name of variables we can understand. We dont keep the colomns after the 8th, it's indicators that we won't use.
+
+```
+
 ### Main target variable
 
 To illustrate our infant mortality variable, we will show the difference between top 5 and bottom 5 departments. Showing all 101 departments in one graph would be ugly.
@@ -293,4 +320,3 @@ ggplot(top_bottom,
   theme_minimal() +
   theme(legend.position = "top")
 ```
-
