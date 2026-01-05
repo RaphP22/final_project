@@ -194,6 +194,13 @@ situation_demo <- situation_demo %>%
                                        "Auvergne-Rhône-Alpes", "Provence-Alpes-Côte d'Azur",
                                        "Corse", "Départements et régions d'Outre Mer")
   )
+situation_demo <- situation_demo %>%
+  mutate(
+    across(
+      where(is.character),
+      ~ parse_number(.x, locale = locale(decimal_mark = ",", grouping_mark = " "))
+    )
+  )
 ```
 
 Now we do the data cleaning and joining for the DRESS data about midwives :
