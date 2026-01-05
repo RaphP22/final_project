@@ -282,8 +282,6 @@ incomes[cols_num] <- lapply(incomes[cols_num], function(x) {
   as.numeric(gsub(",", ".", x))
 })
 
-
-
 ## We don't keep the first 4th lign and neither the 6th because it's the 5th lign which has the name of variables we can understand. We dont keep the colomns after the 8th, it's indicators that we won't use.
 
 ```
@@ -328,3 +326,8 @@ ggplot(top_bottom,
   theme_minimal() +
   theme(legend.position = "top")
 ```
+
+## Descriptive Statistics
+
+### graphs
+
