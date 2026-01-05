@@ -264,6 +264,7 @@ midwives <- midwives %>%
 ```
 
 We import a dataset about the income and poverty rate per department in 2019.
+
 ```{r}
 
 incomes <- read.csv2(
