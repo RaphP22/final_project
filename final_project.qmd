@@ -50,6 +50,7 @@ library(dplyr)
 library(ggplot2)
 library(knitr)
 library(here)
+library(stringr)
 ```
 
 ```{r}
@@ -342,9 +343,6 @@ situation_demo <- situation_demo[order(situation_demo$`Départements et régions
 
 ```
 
-
-
-
 ### Main target variable
 
 To illustrate our infant mortality variable, we will show the difference between top 5 and bottom 5 departments. Showing all 101 departments in one graph would be ugly.
@@ -392,61 +390,136 @@ ggplot(top_bottom,
 
 Socio-economic conditions are widely recognized as key determinants of early childhood health. In particular, poverty may limit access to healthcare, increase exposure to health risks, and negatively affect pregnancy outcomes. This section examines the relationship between poverty rates and infant mortality across French departments in 2019.
 
-Data Frame
+## Descriptive Statistics
+
+### 1. Poverty and Infant Mortality
+
+Socio-economic conditions are widely recognized as key determinants of early childhood health. Poverty may limit access to healthcare, increase exposure to health risks, and negatively affect pregnancy outcomes. This section examines the relationship between poverty rates and infant mortality across French departments in 2019.
 
 ```{r}
-incomes <- read.csv2(
-  file = here("data/revenus_2019.csv"),
-  skip = 4,
-  header = TRUE,
-  stringsAsFactors = FALSE
-)
+#| message: false
+#| warning: false
+#| fig.width: 9
+#| fig.height: 6
 
-# On nettoie juste les lignes et colonnes inutiles comme avant
-incomes <- incomes[-c(1, 100, 101, 102, 103), 1:9]
+library(ggplot2)
 
-cols_num <- 3:ncol(incomes)
-incomes[cols_num] <- lapply(incomes[cols_num], function(x) {
-  as.numeric(gsub(",", ".", x))
-})
+ggplot(incomes, aes(
+x = reorder(`Libellé.géographique`, `Taux de pauvreté`),
+y = `Taux de pauvreté`
+)) +
+geom_col(fill = "steelblue") +
+coord_flip() +
+labs(
+title = "Poverty rate by French department (2019)",
+x = "Department",
+y = "Poverty rate (%)",
+caption = "Source: INSEE"
+) +
+theme_minimal()
 
-incomes <- incomes %>%
-  rename(
-    `Taux de pauvreté` = `Taux.de.pauvreté.Ensemble....`
-  )
-colnames(incomes)[1] <- "Départements et régions"
 ```
 
 ```{r}
-poverty_mortality <- infant_mortality %>%
-  select(`Départements et régions`, `Infantile (c)`) %>%
-  inner_join(
-    incomes %>% select(`Départements et régions`, `Taux de pauvreté`),
-    by = "Départements et régions"
-  )
-```
+#| message: false
+#| warning: false
+#| fig.width: 7
+#| fig.height: 5
 
-Scatter plot 
+library(ggplot2)
+
+ggplot() +
+geom_density(
+data = incomes,
+aes(x = `Taux de pauvreté`, fill = "Poverty rate"),
+alpha = 0.5
+) +
+geom_density(
+data = infant_mortality,
+aes(x = `Infantile (c)`, fill = "Infant mortality"),
+alpha = 0.5
+) +
+labs(
+title = "Distribution of poverty and infant mortality across departments (2019)",
+x = "Value (poverty % / infant mortality ‰)",
+y = "Density",
+fill = ""
+) +
+theme_minimal()
+
+```
+Description of the Graph
+- The x-axis represents the values of poverty rates (in percentage) and infant mortality rates (in per thousand).
+- The y-axis indicates the density, showing the frequency of these values across the departments.
+
+The red curve shows the infant mortality rate, which stays mostly low in many departments, around 4%. 
+The green curve shows the poverty rate, which is a bit more spread out. Some departments have very little poverty, while others have a lot, especially around 10-20%. This tells us that poverty is not the same everywhere—it changes a lot from one department to another.
 
 ```{r}
 #| echo: false
-#| warning: false
 #| message: false
+#| warning: false
+#| fig.width: 10
+#| fig.height: 6
 
-ggplot(
-poverty_mortality,
-aes(x = 'Taux de pauvreté', y = 'Infantile (c)')
-) +
-geom_point(alpha = 0.7, color = "steelblue") +
-geom_smooth(method = "lm", se = TRUE, color = "black") +
-labs(
-title = "Infant mortality and poverty rate across French departments (2019)",
-x = "Poverty rate (%)",
-y = "Infant mortality rate (per 1,000 live births)"
-) +
-theme_minimal()
+library(ggplot2)
+library(tidyr)
+
+# Créer un dataframe "long" pour ggplot en utilisant les backticks pour les noms de colonnes
+df_long <- data.frame(
+  Département = rep(infant_mortality$`Départements et régions`, 2),
+  Valeur = c(
+    infant_mortality$`Infantile (c)`,
+    as.numeric(gsub(",", ".", incomes$`Taux.de.pauvreté.Ensemble....`))
+  ),
+  Indicateur = rep(
+    c("Mortalité infantile (‰)", "Taux de pauvreté (%)"), 
+    each = nrow(infant_mortality)
+  )
+)
+
+ggplot(df_long, aes(x = Indicateur, y = Valeur, fill = Indicateur)) +
+  geom_boxplot(alpha = 0.7, outlier.colour = "red", outlier.size = 2) +
+  geom_jitter(width = 0.2, alpha = 0.3, size = 1.5) +
+  scale_fill_manual(values = c("steelblue", "coral")) +
+  labs(
+    title = "Distribution du taux de pauvreté et de la mortalité infantile (2019)",
+    x = "Indicateur",
+    y = "Valeur",
+    caption = "Source : INSEE & DREES"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "none")
 ```
 
+
+```{r}
+# Vérifier les noms de colonnes exacts
+colnames(incomes)
+colnames(infant_mortality)
+
+# Créer un vecteur propre pour le taux de pauvreté
+poverty_rate <- as.numeric(gsub(",", ".", incomes$`Taux de pauvreté`))  # adapter selon ton colnames exact
+infant_rate <- infant_mortality$`Infantile (c)`[1:length(poverty_rate)]  # garder même nombre de lignes
+
+# Créer le data frame
+plot_data <- data.frame(
+  poverty_rate = poverty_rate,
+  infant_mortality_rate = infant_rate
+)
+
+# Graphique
+ggplot(plot_data, aes(x = poverty_rate, y = infant_mortality_rate)) +
+  geom_point(color = "coral", size = 3, alpha = 0.6) +
+  geom_smooth(method = "lm", color = "steelblue", fill = "lightblue", alpha = 0.2) +
+  labs(
+    title = "Poverty Rate vs Infant Mortality Rate (2019)",
+    x = "Poverty Rate (%)",
+    y = "Infant Mortality Rate (‰)"
+  ) +
+  theme_minimal()
+
+```
 
 
 
