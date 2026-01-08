@@ -390,6 +390,27 @@ theme_minimal()
 
 
 
+##Sorting the dataset in alphabetical order and adding a number to each departement.
+
+
+```{r}
+midwives <- midwives[order(midwives$departement), ]
+
+midwives$number <- 1:nrow(midwives)
+
+
+incomes <- incomes[order(incomes$Libellé.géographique), ]
+
+incomes$number <- 1:nrow(incomes)
+
+
+
+
+
+
+
+
+```
 
 
 
