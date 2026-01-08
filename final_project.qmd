@@ -329,5 +329,68 @@ ggplot(top_bottom,
 
 ## Descriptive Statistics
 
-### graphs
+### Poverty and Infant Mortality
+
+Socio-economic conditions are widely recognized as key determinants of early childhood health. In particular, poverty may limit access to healthcare, increase exposure to health risks, and negatively affect pregnancy outcomes. This section examines the relationship between poverty rates and infant mortality across French departments in 2019.
+
+Data Frame
+
+```{r}
+incomes <- read.csv2(
+  file = here("data/revenus_2019.csv"),
+  skip = 4,
+  header = TRUE,
+  stringsAsFactors = FALSE
+)
+
+# On nettoie juste les lignes et colonnes inutiles comme avant
+incomes <- incomes[-c(1, 100, 101, 102, 103), 1:9]
+
+cols_num <- 3:ncol(incomes)
+incomes[cols_num] <- lapply(incomes[cols_num], function(x) {
+  as.numeric(gsub(",", ".", x))
+})
+
+incomes <- incomes %>%
+  rename(
+    `Taux de pauvreté` = `Taux.de.pauvreté.Ensemble....`
+  )
+colnames(incomes)[1] <- "Départements et régions"
+```
+
+```{r}
+poverty_mortality <- infant_mortality %>%
+  select(`Départements et régions`, `Infantile (c)`) %>%
+  inner_join(
+    incomes %>% select(`Départements et régions`, `Taux de pauvreté`),
+    by = "Départements et régions"
+  )
+```
+
+Scatter plot 
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+ggplot(
+poverty_mortality,
+aes(x = 'Taux de pauvreté', y = 'Infantile (c)')
+) +
+geom_point(alpha = 0.7, color = "steelblue") +
+geom_smooth(method = "lm", se = TRUE, color = "black") +
+labs(
+title = "Infant mortality and poverty rate across French departments (2019)",
+x = "Poverty rate (%)",
+y = "Infant mortality rate (per 1,000 live births)"
+) +
+theme_minimal()
+```
+
+
+
+
+
+
 
