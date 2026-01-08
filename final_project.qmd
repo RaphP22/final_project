@@ -394,9 +394,19 @@ theme_minimal()
 
 
 ```{r}
-midwives <- midwives[order(midwives$departement), ]
 
-midwives$number <- 1:nrow(midwives)
+midwives$departement_clean <- sub("^[0-9A-Za-z -]+([A-Z].*)$", "\\1", midwives$departement)
+
+
+midwives$departement_clean[midwives$departement == "02A -Corse-du-Sud"] <- "Corse-du-Sud"
+midwives$departement_clean[midwives$departement == "02B -Haute-Corse"] <- "Haute-Corse"
+
+
+midwives <- midwives[order(midwives$departement_clean), ]
+
+
+midwives$number <- match(midwives$departement_clean, unique(midwives$departement_clean))
+
 
 
 incomes <- incomes[order(incomes$Libellé.géographique), ]
