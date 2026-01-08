@@ -51,6 +51,7 @@ library(ggplot2)
 library(knitr)
 library(here)
 library(stringr)
+library(tidyr)
 ```
 
 ```{r}
@@ -285,6 +286,18 @@ incomes[cols_num] <- lapply(incomes[cols_num], function(x) {
 
 ## We don't keep the first 4th lign and neither the 6th because it's the 5th lign which has the name of variables we can understand. We dont keep the colomns after the 8th, it's indicators that we won't use.
 
+incomes <- incomes %>%
+  rename(
+    'Taux de pauvreté' = `Taux.de.pauvreté.Ensemble....`,
+    'Libellé géographique' = `Libellé.géographique`,
+    num_households = `Nombre.de.ménages.fiscaux`,
+    num_people = `Nombre.de.personnes.dans.les.ménages.fiscaux`,
+    median_income = `Médiane.du.niveau.vie....`,
+    pct_households_taxed = `Part.des.ménages.fiscaux.imposés....`,
+    pct_poverty_under30 = `Taux.de.pauvreté.moins.de.30.ans....`,
+    pct_poverty_30_39 = `Taux.de.pauvreté.30.à.39.ans.....`
+  )
+
 ```
 
 
@@ -321,7 +334,7 @@ midwives$number <- match(midwives$departement_clean, unique(midwives$departement
 
 
 
-incomes <- incomes[order(incomes$Libellé.géographique), ]
+incomes <- incomes[order(incomes$'Libellé géographique'), ]
 
 incomes$number <- 1:nrow(incomes)
 
@@ -402,10 +415,8 @@ Socio-economic conditions are widely recognized as key determinants of early chi
 #| fig.width: 9
 #| fig.height: 6
 
-library(ggplot2)
-
 ggplot(incomes, aes(
-x = reorder(`Libellé.géographique`, `Taux de pauvreté`),
+x = reorder(`Libellé géographique`, `Taux de pauvreté`),
 y = `Taux de pauvreté`
 )) +
 geom_col(fill = "steelblue") +
@@ -425,8 +436,6 @@ theme_minimal()
 #| warning: false
 #| fig.width: 7
 #| fig.height: 5
-
-library(ggplot2)
 
 ggplot() +
 geom_density(
@@ -461,9 +470,6 @@ The green curve shows the poverty rate, which is a bit more spread out. Some dep
 #| warning: false
 #| fig.width: 10
 #| fig.height: 6
-
-library(ggplot2)
-library(tidyr)
 
 # Créer un dataframe "long" pour ggplot en utilisant les backticks pour les noms de colonnes
 df_long <- data.frame(
