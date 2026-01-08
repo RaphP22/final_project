@@ -197,7 +197,7 @@ situation_demo <- situation_demo %>%
 situation_demo <- situation_demo %>%
   mutate(
     across(
-      where(is.character),
+      .cols = !all_of("Départements et régions") & where(is.character),
       ~ parse_number(.x, locale = locale(decimal_mark = ",", grouping_mark = " "))
     )
   )
@@ -285,6 +285,65 @@ incomes[cols_num] <- lapply(incomes[cols_num], function(x) {
 ## We don't keep the first 4th lign and neither the 6th because it's the 5th lign which has the name of variables we can understand. We dont keep the colomns after the 8th, it's indicators that we won't use.
 
 ```
+
+
+Sorting the datasets in alphabetical order and adding a number to each departement.
+
+
+```{r}
+
+midwives <-midwives%>%
+  filter(!grepl(" COM ou Etranger",departement,ignore.case = TRUE))
+
+infant_mortality <-infant_mortality%>%
+  filter(!grepl("Autres",`Départements et régions`,ignore.case = TRUE))
+
+
+
+
+
+midwives$departement_clean <- midwives$departement
+
+midwives$departement_clean[midwives$departement == "02A -Corse-du-Sud"] <- "Corse-du-Sud"
+midwives$departement_clean[midwives$departement == "02B -Haute-Corse"] <- "Haute-Corse"
+
+midwives$departement_clean[midwives$departement == " Martinique"] <- "Martinique"
+
+
+
+midwives <- midwives[order(midwives$departement_clean), ]
+
+
+midwives$number <- match(midwives$departement_clean, unique(midwives$departement_clean))
+
+
+
+
+
+incomes <- incomes[order(incomes$Libellé.géographique), ]
+
+incomes$number <- 1:nrow(incomes)
+
+
+indicateurs_generaux <- indicateurs_generaux[order(indicateurs_generaux$`Départements et régions`), ]
+
+indicateurs_generaux$number <- 1:nrow(indicateurs_generaux)
+
+
+
+infant_mortality <- infant_mortality[order(infant_mortality$`Départements et régions`), ]
+
+infant_mortality$number <- 1:nrow(infant_mortality)
+
+
+
+situation_demo <- situation_demo[order(situation_demo$`Départements et régions`), ]
+
+
+```
+
+
+
 
 ### Main target variable
 
@@ -388,39 +447,6 @@ y = "Infant mortality rate (per 1,000 live births)"
 theme_minimal()
 ```
 
-
-
-##Sorting the dataset in alphabetical order and adding a number to each departement.
-
-
-```{r}
-
-midwives$departement_clean <- sub("^[0-9A-Za-z -]+([A-Z].*)$", "\\1", midwives$departement)
-
-
-midwives$departement_clean[midwives$departement == "02A -Corse-du-Sud"] <- "Corse-du-Sud"
-midwives$departement_clean[midwives$departement == "02B -Haute-Corse"] <- "Haute-Corse"
-
-
-midwives <- midwives[order(midwives$departement_clean), ]
-
-
-midwives$number <- match(midwives$departement_clean, unique(midwives$departement_clean))
-
-
-
-incomes <- incomes[order(incomes$Libellé.géographique), ]
-
-incomes$number <- 1:nrow(incomes)
-
-
-
-
-
-
-
-
-```
 
 
 
