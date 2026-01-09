@@ -52,6 +52,7 @@ library(knitr)
 library(here)
 library(stringr)
 library(tidyr)
+library(lmtest)
 ```
 
 ```{r}
@@ -500,9 +501,6 @@ ggplot(df_long, aes(x = Indicateur, y = Valeur, fill = Indicateur)) +
 
 
 ```{r}
-# Vérifier les noms de colonnes exacts
-colnames(incomes)
-colnames(infant_mortality)
 
 # Créer un vecteur propre pour le taux de pauvreté
 poverty_rate <- as.numeric(gsub(",", ".", incomes$`Taux de pauvreté`))  # adapter selon ton colnames exact
@@ -528,5 +526,84 @@ ggplot(plot_data, aes(x = poverty_rate, y = infant_mortality_rate)) +
 ```
 
 
+```{r}
+data_model <- data.frame(
+  mortalite = infant_mortality$`Infantile (c)`,
+  revenu = incomes$median_income,
+  pauvrete = incomes$`Taux de pauvreté`,
+  hors_mariage = indicateurs_generaux$`Proportion de naissances hors mariage (a)`
+) %>% na.omit()
+
+cat("=== STATISTIQUES DESCRIPTIVES ===\n")
+print(summary(data_model))
+
+# ============================================================================
+# 2. CORRÉLATIONS
+# ============================================================================
+
+cat("\n=== MATRICE DE CORRÉLATION ===\n")
+print(kable(round(cor(data_model), 3)))
+
+# ============================================================================
+# 3. MODÈLES DE RÉGRESSION
+# ============================================================================
+
+# Modèle 1 : Sans interaction
+cat("\n=== MODÈLE 1 : SANS INTERACTION ===\n")
+model1 <- lm(mortalite ~ revenu + pauvrete + hors_mariage, data = data_model)
+print(summary(model1))
+
+# Modèle 2 : Avec interaction revenu × hors mariage
+cat("\n=== MODÈLE 2 : AVEC INTERACTION ===\n")
+model2 <- lm(mortalite ~ revenu + pauvrete + hors_mariage + revenu:hors_mariage, 
+             data = data_model)
+print(summary(model2))
+
+# Comparaison des modèles
+cat("\n=== COMPARAISON ANOVA ===\n")
+print(anova(model1, model2))
+
+cat("\n=== CRITÈRES AIC/BIC ===\n")
+cat("Model 1 - AIC:", AIC(model1), "| BIC:", BIC(model1), "\n")
+cat("Model 2 - AIC:", AIC(model2), "| BIC:", BIC(model2), "\n")
+
+# ============================================================================
+# 4. DIAGNOSTICS
+# ============================================================================
+cat("\n=== TESTS DIAGNOSTIQUES (Modèle 2) ===\n")
+cat("Normalité (Shapiro) p-value:", shapiro.test(residuals(model2))$p.value, "\n")
+cat("Homoscédasticité (Breusch-Pagan) p-value:", bptest(model2)$p.value, "\n")
+
+
+# Graphiques de diagnostic
+par(mfrow = c(2, 2))
+plot(model2)
+
+# ============================================================================
+# 5. VISUALISATION DE L'INTERACTION
+# ============================================================================
+
+# Prédictions pour l'interaction
+prop_niveaux <- quantile(data_model$hors_mariage, c(0.25, 0.5, 0.75))
+revenu_seq <- seq(min(data_model$revenu), max(data_model$revenu), length.out = 100)
+
+predictions <- lapply(1:3, function(i) {
+  pred_data <- data.frame(
+    revenu = revenu_seq,
+    pauvrete = mean(data_model$pauvrete),
+    hors_mariage = prop_niveaux[i]
+  )
+  pred_data$mortalite_pred <- predict(model2, newdata = pred_data)
+  pred_data$niveau <- paste0("Q", i)
+  return(pred_data)
+}) %>% bind_rows()
+
+ggplot(predictions, aes(x = revenu, y = mortalite_pred, color = niveau)) +
+  geom_line(size = 1.2) +
+  labs(title = "Interaction : Revenu × Proportion hors mariage",
+       x = "Revenu médian", y = "Mortalité infantile prédite",
+       color = "Quartile hors\nmariage") +
+  theme_minimal()
+```
 
 
