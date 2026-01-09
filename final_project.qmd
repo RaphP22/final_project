@@ -404,12 +404,6 @@ ggplot(top_bottom,
 
 Socio-economic conditions are widely recognized as key determinants of early childhood health. In particular, poverty may limit access to healthcare, increase exposure to health risks, and negatively affect pregnancy outcomes. This section examines the relationship between poverty rates and infant mortality across French departments in 2019.
 
-## Descriptive Statistics
-
-### 1. Poverty and Infant Mortality
-
-Socio-economic conditions are widely recognized as key determinants of early childhood health. Poverty may limit access to healthcare, increase exposure to health risks, and negatively affect pregnancy outcomes. This section examines the relationship between poverty rates and infant mortality across French departments in 2019.
-
 ```{r}
 #| message: false
 #| warning: false
@@ -530,53 +524,131 @@ ggplot(plot_data, aes(x = poverty_rate, y = infant_mortality_rate)) +
 data_model <- data.frame(
   mortalite = infant_mortality$`Infantile (c)`,
   revenu = incomes$median_income,
+  age_birth = indicateurs_generaux$`Âge moyen à l'accouchement (a)`,
   pauvrete = incomes$`Taux de pauvreté`,
   hors_mariage = indicateurs_generaux$`Proportion de naissances hors mariage (a)`
 ) %>% na.omit()
 
-# ============================================================================
+
 # 2. CORRÉLATIONS
-# ============================================================================
 
-cat("\n=== MATRICE DE CORRÉLATION ===\n")
-print(kable(round(cor(data_model), 3)))
-
-# ============================================================================
-# 3. MODÈLES DE RÉGRESSION
-# ============================================================================
-
-# Modèle 1 : Sans interaction
-cat("\n=== MODÈLE 1 : SANS INTERACTION ===\n")
-model1 <- lm(mortalite ~ revenu + pauvrete + hors_mariage, data = data_model)
-print(summary(model1))
-
-
-# Graphiques de diagnostic
-par(mfrow = c(2, 2))
-plot(model1)
-
-
-# Prédictions pour l'interaction
-prop_niveaux <- quantile(data_model$hors_mariage, c(0.25, 0.5, 0.75))
-revenu_seq <- seq(min(data_model$revenu), max(data_model$revenu), length.out = 100)
-
-predictions <- lapply(1:3, function(i) {
-  pred_data <- data.frame(
-    revenu = revenu_seq,
-    pauvrete = mean(data_model$pauvrete),
-    hors_mariage = prop_niveaux[i]
-  )
-  pred_data$mortalite_pred <- predict(model2, newdata = pred_data)
-  pred_data$niveau <- paste0("Q", i)
-  return(pred_data)
-}) %>% bind_rows()
-
-ggplot(predictions, aes(x = revenu, y = mortalite_pred, color = niveau)) +
-  geom_line(size = 1.2) +
-  labs(title = "Interaction : Revenu × Proportion hors mariage",
-       x = "Revenu médian", y = "Mortalité infantile prédite",
-       color = "Quartile hors\nmariage") +
-  theme_minimal()
+kable(round(cor(data_model), 3))
 ```
 
+
+```{r}
+# 3. MODÈLES DE RÉGRESSION
+
+model1 <- lm(mortalite ~ revenu + age_birth + pauvrete + hors_mariage, data = data_model)
+summary(model1)
+```
+
+
+```{r}
+# Plot regression
+par(mfrow = c(2, 2))
+plot(model1)
+```
+
+
+## Midwives and Infant Mortality
+
+```{r}
+#| message: false
+#| warning: false
+#| fig.width: 10
+#| fig.height: 7
+
+# Prepare infant mortality data
+infant_data <- infant_mortality %>%
+  mutate(
+    departement = `Départements et régions`,
+    infant_mortality_rate = `Infantile (c)`
+  ) %>%
+  select(departement, infant_mortality_rate)
+
+# Prepare midwives data (already joined)
+midwives_plot <- midwives %>%
+  mutate(
+    departement = departement,
+    effectif = effectif_2019,
+    densite = densite_2019
+  ) %>%
+  select(departement, effectif, densite)
+
+# Join by department (only for plotting)
+midwives_plot_data <- midwives_plot %>%
+  inner_join(infant_data, by = "departement")
+
+# Scatter plot: Midwife density vs Infant mortality
+ggplot(midwives_plot_data, 
+       aes(x = densite, y = infant_mortality_rate, size = effectif)) +
+  geom_point(alpha = 0.7, color = "steelblue") +
+  geom_smooth(method = "lm", se = TRUE, color = "coral", linetype = "dashed") +
+  scale_size_continuous(name = "Number of midwives") +
+  labs(
+    title = "Midwives Density and Infant Mortality Across French Departments (2019)",
+    x = "Midwives density (per 10,000 inhabitants)",
+    y = "Infant mortality rate (‰)",
+    caption = "Source: INSEE & DREES | Point size = total number of midwives"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    legend.position = "right"
+  )
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| fig.width: 10
+#| fig.height: 7
+
+ggplot(midwives_plot_data, 
+       aes(x = effectif, y = infant_mortality_rate, size = densite)) +
+  geom_point(alpha = 0.7, color = "darkgreen") +
+  geom_smooth(method = "lm", se = TRUE, color = "orange", linetype = "dashed") +
+  scale_size_continuous(name = "Midwives effectifs") +
+  labs(
+    title = "Total Number of Midwives vs Infant Mortality Across French Departments (2019)",
+    x = "Total number of midwives (effectif 2019)",
+    y = "Infant mortality rate (‰)",
+    caption = "Source: INSEE & DREES | Point size = midwives density per population"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    legend.position = "right"
+  )
+```
+
+```{r}
+
+# Prepare dataset
+midwives_plot_data <- midwives %>%
+  select(departement, effectif_2019, densite_2019) %>%
+  inner_join(
+    infant_mortality %>%
+      select(`Départements et régions`, `Nés vivants (a)`, `Décédés de moins d'un an (b)`) %>%
+      mutate(infant_mortality_rate = (`Décédés de moins d'un an (b)` / `Nés vivants (a)`) * 1000),
+    by = c("departement" = "Départements et régions")
+  )
+
+# Density plot of midwives
+ggplot(midwives_plot_data, aes(x = densite_2019)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  labs(
+    title = "Density of Midwives per Department (2019)",
+    x = "Midwives Density",
+    y = "Density"
+  ) +
+  theme_minimal()
+
+```
+```{r}
+# Linear regression: Infant mortality ~ Midwives density
+lm_density <- lm(infant_mortality_rate ~ densite_2019, data = midwives_plot_data)
+summary(lm_density)
+```
 
