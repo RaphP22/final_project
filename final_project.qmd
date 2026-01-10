@@ -464,7 +464,6 @@ The red curve shows the infant mortality rate, which stays mostly low in many de
 The green curve shows the poverty rate, which is a bit more spread. We observe again the disparity in poverty rate among departements.
 
 ```{r echo=FALSE}
-#| echo: false
 #| message: false
 #| warning: false
 
@@ -495,6 +494,42 @@ Now we can link the two variables. This scatter plot shows a positive correlatio
 Most departments cluster in the lower-left corner, indicating lower poverty rates (below 20%) and lower infant mortality rates (below 5‰). 
 However, we observe that as the poverty rate increases—especially beyond 40%—there is an upward trend in infant mortality rates, reaching up to 10‰ or more.
 
+```{r echo=FALSE}
+#| message: false
+#| warning: false
+
+data_rev <- infant_mortality %>%
+  left_join(midwives, by = "number") %>%
+  left_join(incomes, by = "number")
+
+ggplot(data_rev, aes(x = median_income, y = `Infantile (c)`)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "loess", se = FALSE, color = "darkred", formula = y ~ x) +  
+  labs(
+    title = "Relation between infant mortality rate and median income",
+    x = "Median income",
+    y = "Infant mortality rate",
+  ) +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+```
+
+This scatter plot with a LOESS curve illustrates a non-linear relationship. What highlights this graph is the extreme cases on the top left. That is why we are going to identify them.
+
+```{r echo=FALSE}
+seuil_revenu <- 15000
+seuil_mortalite <- 5
+
+departements_extremes <- data_rev %>%
+  filter(median_income < seuil_revenu, `Infantile (c)` > seuil_mortalite) %>%
+  arrange(`Infantile (c)`) %>%
+  select(number, departement, `Infantile (c)`, median_income)
+
+departements_extremes
+```
+The two extreme values are Mayotte and Guyanne. We observe again that overseas departments are the poorest of France and where the infant mortality problem is the biggest.
+
 
 ### Regression : to what extend can we explain infant mortality by the age when giving birth, poverty and the births out of wedlock ?
 
@@ -503,6 +538,7 @@ Then, we are going to make a linear regression. The aim of this step is to ident
 ```{r echo=FALSE}
 data_model <- data.frame(
   mortalite = infant_mortality$`Infantile (c)`,
+  income = incomes$median_income, 
   age_birth = indicateurs_generaux$`Âge moyen à l'accouchement (a)`,
   pauvrete = incomes$`Taux de pauvreté`,
   hors_mariage = indicateurs_generaux$`Proportion de naissances hors mariage (a)`
@@ -513,7 +549,8 @@ data_model <- data.frame(
 kable(round(cor(data_model), 3))
 ```
 
-We did a correlation table to see if any independent variable are correlated. We can see that the age of the mother when giving birth is highly negatively correlated with the proportion of child born out of wedlock. 
+This correlation table helps us choosing between median income or poverty for our regression. Of course as the two are highly correlated and almost the same indicator, the two of them wouldn't make sense. We observe that poverty is more correlated to infant mortality than income. We will then include poverty in our regression model.
+This correlation table is also useful to see if any independent variable are correlated. We can see that the age of the mother when giving birth is highly negatively correlated with the proportion of child born out of wedlock. 
 We would have to keep that in mind of any of this two variable has a big impact on the analysed variable.
 
 ```{r echo=FALSE}
@@ -656,48 +693,7 @@ ggplot(midwives_plot_data,
   )
 ```
 
-The lign is here very horizontal, we can't really conclude on a trend.
-
-
-### Now we continue our analyse with the revenu of households in departments. Does it matter as much as poverty ?
-
-```{r echo=FALSE}
-#| message: false
-#| warning: false
-
-data <- infant_mortality %>%
-  left_join(midwives, by = "number") %>%
-  left_join(incomes, by = "number")
-
-ggplot(data, aes(x = median_income, y = `Infantile (c)`, color = densite_2019, size = densite_2019)) +
-  geom_point(alpha = 0.6) +
-  geom_smooth(method = "loess", se = FALSE, color = "darkred", formula = y ~ x) +  
-  labs(
-    title = "Relation between infant mortality rate and median income",
-    x = "Median income",
-    y = "Infant mortality rate",
-    color = "midwives density",
-    size = "midwives density"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "right")
-
-```
-
-
-
-```{r echo=FALSE}
-seuil_revenu <- 15000
-seuil_mortalite <- 5
-
-departements_extremes <- data %>%
-  filter(median_income < seuil_revenu, `Infantile (c)` > seuil_mortalite) %>%
-  arrange(`Infantile (c)`) %>%
-  select(number, departement, `Infantile (c)`, median_income, densite_2019)
-
-departements_extremes
-```
-
+The line is very horizontal here, we can't really conclude on a trend.
 
 ```{r echo=FALSE}
 # Prepare the data
@@ -716,25 +712,23 @@ lm_density <- lm(infant_mortality_rate ~ densite_2019, data = midwives_plot_data
 summary(lm_density)
 ```
 
-Finally, we examines the relationship between infant mortality rate and midwives density in 2019. Is there a real link ?
-The coefficient for midwives density is 0.0144, and it is statistically significant (p-value = 0.00188), suggesting that midwives density has a positive, though modest, association with infant mortality rate in this model. However, the R-squared value of 0.1002 indicates that only about 10% of the variation in infant mortality rate is explained by midwives density, implying other factors likely play a more substantial role.
+Finally, we examine the relationship between infant mortality rate and midwives density in 2019. Is there a real link ?
+The coefficient for midwives density is 0.0144, and it is statistically significant (p-value = 0.00188), suggesting that midwives density has a positive, though modest, association with infant mortality rate in this model. However, the R-squared value of 0.1002 indicates that only about 10% of the variation in infant mortality rate is explained by midwives density.
 
-While the analysis reveals a counterintuitive positive association between midwives density and infant mortality rate, this does not imply a causal relationship. Many other important factors such as population size, poverty levels, access to healthcare, and every socioeconomic conditions likely influence infant mortality far more significantly.
-Therefore, we cannot conclude that an increase in midwives density directly affects infant mortality without accounting for these broader contextual variables.
+The analysis reveals a surprising positive association between midwives density and infant mortality rate. However this does not imply a causal relationship. 
+The density might itself be explained by other factors like population density or hospitals overload.
 
 ## Conclusion
 
 The objective of this project was to understand why infant mortality differs so much across French departments by combining different data for the year 2019. By focusing on the last year before the COVID-19 crisis, we aimed to analyze structural differences rather than temporary shocks.
 
-Our analysis shows that infant mortality in France is not evenly distributed across territories. Even though the national average is relatively low, some departments face much higher infant mortality rates than others. 
+Our analysis shows that infant mortality in France is not evenly distributed across territories. Even though the national average is relatively low, some departments, especially the overseas ones, face much higher infant mortality rates. 
 
-Among all the variables studied, poverty appears to be the most important factor. Both descriptive graphs and regression results show that departments with higher poverty rates tend to have higher infant mortality rates. This result is statistically significant and suggests that economic system plays a central role in early childhood health outcomes. Limited access to healthcare, poorer living conditions, and higher exposure to health risks could explain this relationship.
+Among all the variables studied, poverty rate appears to be the most important factor. Both descriptive graphs and regression results show that departments with higher poverty rates tend to have higher infant mortality rates. This result is statistically significant and suggests that economic situation plays a central role in early childhood health outcomes. Limited access to healthcare, poorer living conditions, and higher exposure to health risks could explain this.
 
-The results regarding midwives are more ambiguous. We found a slight positive relationship between midwives density and infant mortality, which is counterintuitive at first glance. However, this does not mean that a higher number of midwives causes higher infant mortality. More likely, departments with higher population density and greater healthcare needs also have more midwives. In such contexts, healthcare services may be under greater pressure, which could affect outcomes. 
+The results regarding midwives are more ambiguous. We found a slight positive relationship between midwives density and infant mortality, which is surprising at first. However, this does not mean that a higher number of midwives causes higher infant mortality. We can suppose that departments with higher population density and greater healthcare needs also have more midwives. In such contexts, healthcare services may be under greater pressure, which could affect outcomes. 
 
-Overall, this project shows that infant mortality is influenced by multiple factors, but socio-economic conditions, especially poverty, play an important role.
 
-This study has some limitations. It relies on data from a single year and does not control for all possible confounding factors, such as urbanization or hospital capacity. Future work could extend this analysis over several years and include additional variables to better capture the complexity of infant mortality. Despite these limitations, our results clearly emphasize that addressing economic inequalities is key to improving infant health outcomes in France.
-
+This study has some limitations. It relies on data from a single year and does not control for all possible confounding factors, such as urbanization or hospital capacity. To extend this analysis, we could analyse the data over several years and include additional variables to better capture the complexity of infant mortality and maybe some evolution patterns. Despite these limitations, our results highlight that addressing economic inequalities is key to improve infant health outcomes in France.
 
 
