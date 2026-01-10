@@ -14,7 +14,7 @@ Please find the github link [here](https://github.com/RaphP22/final_project).
 
 With this link, we downloaded : [here](https://www.insee.fr/fr/statistiques/7624538?sommaire=7624746&utm_)
 
-- P3D – Indicateurs généraux de la population par département et région - Séries depuis 1990;
+- P3D – Indicateurs généraux de la population par département et région - Séries depuis 1990
 - P1D – Évolution générale de la situation démographique par département et région - Séries depuis 1990
 - P2D – Mortalité infantile par département et région - Séries depuis 1990.
 
