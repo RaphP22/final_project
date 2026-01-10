@@ -700,6 +700,17 @@ departements_extremes
 
 
 ```{r echo=FALSE}
+# Prepare the data
+midwives_plot_data <- midwives %>%
+  select(departement, effectif_2019, densite_2019) %>%
+  inner_join(
+    infant_mortality %>%
+      select(`Départements et régions`, `Nés vivants (a)`, `Décédés de moins d'un an (b)`, `Infantile (c)`) %>%
+      mutate(infant_mortality_rate = (`Décédés de moins d'un an (b)` / `Nés vivants (a)`) * 1000),
+    by = c("departement" = "Départements et régions")
+  ) %>%
+  drop_na(densite_2019, infant_mortality_rate) 
+
 # Linear regression: Infant mortality ~ Midwives density
 lm_density <- lm(infant_mortality_rate ~ densite_2019, data = midwives_plot_data)
 summary(lm_density)
@@ -710,5 +721,20 @@ The coefficient for midwives density is 0.0144, and it is statistically signific
 
 While the analysis reveals a counterintuitive positive association between midwives density and infant mortality rate, this does not imply a causal relationship. Many other important factors such as population size, poverty levels, access to healthcare, and every socioeconomic conditions likely influence infant mortality far more significantly.
 Therefore, we cannot conclude that an increase in midwives density directly affects infant mortality without accounting for these broader contextual variables.
+
+## Conclusion
+
+The objective of this project was to understand why infant mortality differs so much across French departments by combining different data for the year 2019. By focusing on the last year before the COVID-19 crisis, we aimed to analyze structural differences rather than temporary shocks.
+
+Our analysis shows that infant mortality in France is not evenly distributed across territories. Even though the national average is relatively low, some departments face much higher infant mortality rates than others. 
+
+Among all the variables studied, poverty appears to be the most important factor. Both descriptive graphs and regression results show that departments with higher poverty rates tend to have higher infant mortality rates. This result is statistically significant and suggests that economic system plays a central role in early childhood health outcomes. Limited access to healthcare, poorer living conditions, and higher exposure to health risks could explain this relationship.
+
+The results regarding midwives are more ambiguous. We found a slight positive relationship between midwives density and infant mortality, which is counterintuitive at first glance. However, this does not mean that a higher number of midwives causes higher infant mortality. More likely, departments with higher population density and greater healthcare needs also have more midwives. In such contexts, healthcare services may be under greater pressure, which could affect outcomes. 
+
+Overall, this project shows that infant mortality is influenced by multiple factors, but socio-economic conditions, especially poverty, play an important role.
+
+This study has some limitations. It relies on data from a single year and does not control for all possible confounding factors, such as urbanization or hospital capacity. Future work could extend this analysis over several years and include additional variables to better capture the complexity of infant mortality. Despite these limitations, our results clearly emphasize that addressing economic inequalities is key to improving infant health outcomes in France.
+
 
 
