@@ -1,7 +1,7 @@
 ---
 title: "Data Management Final Project"
 author: "Tom Flachaire & Raphael Paillard"
-format: html
+format: pdf
 ---
 
 ## Project description
@@ -42,7 +42,7 @@ Midwives RPPS 2012–2025 tracks the number and density of registered midwives a
 
 ### Basic information about each data file
 
-```{r}
+```{r echo=FALSE}
 #| message: false
 #| warning: false
 library(readr)
@@ -55,7 +55,7 @@ library(tidyr)
 library(lmtest)
 ```
 
-```{r}
+```{r echo=FALSE}
 get_data_info <- function(file_path) {
   data <- read.csv2(file_path)
   
@@ -106,7 +106,7 @@ We only kept data from 2019, the most recent year available before covid that co
 
 ### Data Preparation and Cleaning
 
-```{r}
+```{r echo=FALSE}
 #| message: false
 #| warning: false
 infant_mortality <- read_csv2(
@@ -151,7 +151,7 @@ Now let's clean the other databases.
 
 For indicateurs_generaux database :
 
-```{r}
+```{r echo=FALSE}
 #| message: false
 #| warning: false
 indicateurs_generaux <- read_csv2(
@@ -176,7 +176,7 @@ indicateurs_generaux <- indicateurs_generaux %>%
 
 For situation_demographique database :
 
-```{r}
+```{r echo=FALSE}
 #| message: false
 #| warning: false
 situation_demo <- read_csv2(
@@ -208,7 +208,7 @@ situation_demo <- situation_demo %>%
 
 Now we do the data cleaning and joining for the DRESS data about midwives :
 
-```{r}
+```{r echo=FALSE}
 
 midwives_workforce_complete <- read.csv2(here("data/Sages-femmes_effectif.csv"), stringsAsFactors = FALSE)
 
@@ -235,7 +235,7 @@ midwives_workforce <- midwives_workforce %>%
 ```
 
 
-```{r}
+```{r echo=FALSE}
 
 # we do exactly the same for the midwives density.
 midwives_density_complete <- read.csv2(here("data/Sages-femmes_densité.csv"), stringsAsFactors = FALSE)
@@ -257,7 +257,7 @@ midwives_density <- midwives_density %>%
 ```
 
 
-```{r}
+```{r echo=FALSE}
 # We join the 2 datasets to have only one for midwives : 
 
 midwives <- inner_join(midwives_density, midwives_workforce, by = "departement")
@@ -268,7 +268,7 @@ midwives <- midwives %>%
 
 We import a dataset about the income and poverty rate per department in 2019.
 
-```{r}
+```{r echo=FALSE}
 
 incomes <- read.csv2(
   file = here("data/revenus_2019.csv"),
@@ -305,7 +305,7 @@ incomes <- incomes %>%
 Sorting the datasets in alphabetical order and adding a number to each departement.
 
 
-```{r}
+```{r echo=FALSE}
 
 midwives <-midwives%>%
   filter(!grepl(" COM ou Etranger",departement,ignore.case = TRUE))
@@ -354,14 +354,13 @@ infant_mortality$number <- 1:nrow(infant_mortality)
 
 situation_demo <- situation_demo[order(situation_demo$`Départements et régions`), ]
 
-
 ```
 
 ### Main target variable
 
 To illustrate our infant mortality variable, we will show the difference between top 5 and bottom 5 departments. Showing all 101 departments in one graph would be ugly.
 
-```{r}
+```{r echo=FALSE}
 
 # this is how we isolate the top and bottom 5
 
@@ -398,13 +397,15 @@ ggplot(top_bottom,
   theme(legend.position = "top")
 ```
 
+We can see on the graph that there is a huge disparity between departments in infant mortality. For example, the highest deaths are in Seine Saint Denis (148) whereas in Cantal there weren't any death.
+
 ## Descriptive Statistics
 
 ### Poverty and Infant Mortality
 
 Socio-economic conditions are widely recognized as key determinants of early childhood health. In particular, poverty may limit access to healthcare, increase exposure to health risks, and negatively affect pregnancy outcomes. This section examines the relationship between poverty rates and infant mortality across French departments in 2019.
 
-```{r}
+```{r echo=FALSE}
 #| message: false
 #| warning: false
 #| fig.width: 9
@@ -425,8 +426,9 @@ caption = "Source: INSEE"
 theme_minimal()
 
 ```
+In overseas departments, poverty rates are significantly higher, while in mainland France, poverty is more homogeneous and generally lower, with a few exceptions like Seine-Saint-Denis. This reflects economic disparities in poverty rate, and that is important to notice before analysing the link between poverty and infant mortality.
 
-```{r}
+```{r echo=FALSE}
 #| message: false
 #| warning: false
 #| fig.width: 7
@@ -459,12 +461,12 @@ Description of the Graph
 The red curve shows the infant mortality rate, which stays mostly low in many departments, around 4%. 
 The green curve shows the poverty rate, which is a bit more spread out. Some departments have very little poverty, while others have a lot, especially around 10-20%. This tells us that poverty is not the same everywhere—it changes a lot from one department to another.
 
-```{r}
+```{r echo=FALSE}
 #| echo: false
 #| message: false
 #| warning: false
-#| fig.width: 10
-#| fig.height: 6
+#| fig.width: 8
+#| fig.height: 5
 
 # Créer un dataframe "long" pour ggplot en utilisant les backticks pour les noms de colonnes
 df_long <- data.frame(
@@ -492,9 +494,16 @@ ggplot(df_long, aes(x = Indicateur, y = Valeur, fill = Indicateur)) +
   theme_minimal(base_size = 12) +
   theme(legend.position = "none")
 ```
+This boxplot provides a comparison of the distribution of infant mortality rates (‰) and poverty rates (%) across French departments in 2019. 
 
+The blue boxplot shows that most departments have infant mortality rates clustered between approximately 2.5‰ and 4‰. The median rate is around 3.5‰. However, there are several outliers, with some departments experiencing rates as high as 10‰. These outliers suggest that certain areas face significantly higher infant mortality, potentially due to socio-economic factors or healthcare access issues.
 
-```{r}
+The orange boxplot for poverty rates shows a similar result, ranging from nearly 2.5% to over 4%. The median poverty rate is around 3%. The presence of numerous outliers, especially on the higher end, indicates that some departments have substantially higher poverty rates. 
+
+```{r echo=FALSE}
+#| echo: false
+#| message: false
+#| warning: false
 
 # Créer un vecteur propre pour le taux de pauvreté
 poverty_rate <- as.numeric(gsub(",", ".", incomes$`Taux de pauvreté`))  # adapter selon ton colnames exact
@@ -518,9 +527,12 @@ ggplot(plot_data, aes(x = poverty_rate, y = infant_mortality_rate)) +
   theme_minimal()
 
 ```
+Now we can link those two variables. This scatter plot clearly shows a positive correlation between poverty rate and infant mortality rate in French departments for 2019.
+Most departments cluster in the lower-left corner, indicating lower poverty rates (below 20%) and lower infant mortality rates (below 5‰). However, as the poverty rate increases—especially beyond 40%—there is a noticeable upward trend in infant mortality rates, reaching up to 10‰ or more.
+The outliers in the top-right corner (departments with poverty rates above 60% and infant mortality rates above 7.5‰) underlines areas where socio-economic challenges likely contribute to poorer health outcomes. This reinforces the idea that reducing poverty could significantly improve infant survival rates.
 
 
-```{r}
+```{r echo=FALSE}
 data_model <- data.frame(
   mortalite = infant_mortality$`Infantile (c)`,
   revenu = incomes$median_income,
@@ -529,31 +541,44 @@ data_model <- data.frame(
   hors_mariage = indicateurs_generaux$`Proportion de naissances hors mariage (a)`
 ) %>% na.omit()
 
-
-# 2. CORRÉLATIONS
+# Correlation table
 
 kable(round(cor(data_model), 3))
 ```
 
+The analysis reveals that poverty has a strong positive correlation (0.584) with infant mortality, confirming that departments with higher poverty rates consistently exhibit worse infant health outcomes. Conversely, median income shows a moderate negative correlation (-0.461), suggesting that wealthier departments benefit from better healthcare access and resources. Maternal age and births outside marriage display only weak correlations (-0.072 and 0.208, respectively), indicating their limited impact compared to socio-economic factors like poverty and income.
 
-```{r}
-# 3. MODÈLES DE RÉGRESSION
+```{r echo=FALSE}
+# regression
 
 model1 <- lm(mortalite ~ revenu + age_birth + pauvrete + hors_mariage, data = data_model)
 summary(model1)
 ```
+We ran a regression to see what really impacts infant mortality rates. Turns out, poverty is the big one—it’s statistically significant (p = 0.001) and has a positive effect. Basically, the higher the poverty rate in a department, the higher the infant mortality. For every 1% increase in poverty, infant mortality goes up by about 0.14‰. That’s a pretty clear sign that economic conditions matter a lot.
+The other factors—like income, maternal age, and births outside marriage —don’t show a significant impact here. That was a bit surprising, especially since income seemed important in the correlation table, but I guess poverty is the stronger driver.
+The model explains about 33% of the variation in infant mortality (Adjusted R-squared = 0.33), which shows that socio-economic factors play a big role. There’s probably more to the story, like access to healthcare or local policies, but this is a solid starting point. The low p-value (8.719e-09) confirms the overall significance of the model.
 
-
-```{r}
+```{r echo=FALSE}
 # Plot regression
 par(mfrow = c(2, 2))
 plot(model1)
 ```
 
+Residuals vs Fitted:
+The residuals are randomly scattered around zero, indicating that the model fits the data well without any obvious patterns. This suggests that the chosen functional form of the model is appropriate.
+
+Q-Q Plot:
+The residuals largely follow the theoretical quantile line, confirming that they are approximately normally distributed. Minor deviations at the tails may indicate some outliers, but they are not severe.
+
+Scale-Location Plot:
+The residuals display constant variance across fitted values, with no funnel shape visible. This supports the assumption of homoscedasticity, indicating no problematic heteroscedasticity in the model.
+
+Residuals vs Leverage:
+A few observations show high influence on the model, as indicated by their Cook’s distance. 
 
 ## Midwives and Infant Mortality
 
-```{r}
+```{r echo=FALSE}
 #| message: false
 #| warning: false
 #| fig.width: 10
@@ -598,8 +623,13 @@ ggplot(midwives_plot_data,
     legend.position = "right"
   )
 ```
+This scatter plot illustrates the relationship between midwife density (represented by the size of the circles) and infant mortality rates in French departments.
 
-```{r}
+The regression line shows a slight positive trend, suggesting that higher midwife density is unexpectedly associated with slightly higher infant mortality rates. This is counterintuitive.
+The data points are widely scattered, indicating a weak relationship. Some departments with high midwife density still have high infant mortality rates, suggesting other influential factors (e.g., socio-economic conditions).
+
+
+```{r echo=FALSE}
 #| message: false
 #| warning: false
 #| fig.width: 10
@@ -622,8 +652,11 @@ ggplot(midwives_plot_data,
     legend.position = "right"
   )
 ```
+Now let's illustrate the relationship between midwife effectif (represented by the size of the circles) and infant mortality rates in French departments.
 
-```{r}
+The dashed regression line indicates a slight positive trend, suggesting that departments with more midwives do not necessarily have lower infant mortality rates. This implies that simply having more midwives may not directly translate to better infant health outcomes. There is no strong impact.
+
+```{r echo=FALSE}
 
 # Prepare dataset
 midwives_plot_data <- midwives %>%
@@ -646,9 +679,21 @@ ggplot(midwives_plot_data, aes(x = densite_2019)) +
   theme_minimal()
 
 ```
-```{r}
+
+Let's illustrates how midwives were distributed across different departments in France during 2019.
+The majority of departments had a midwife density clustered between approximately 150 and 180, which appears to be the most common range. The curve peaks here, showing where most departments lie in terms of midwife availability.
+This curve looks like a normal distribution, with a clear central peak and tails that gradually taper off toward the extreme values.
+
+```{r echo=FALSE}
 # Linear regression: Infant mortality ~ Midwives density
 lm_density <- lm(infant_mortality_rate ~ densite_2019, data = midwives_plot_data)
 summary(lm_density)
 ```
+
+Finally, we examines the relationship between infant mortality rate and midwives density in 2019. Is there a real link ?
+The coefficient for midwives density is 0.0144, and it is statistically significant (p-value = 0.00188), suggesting that midwives density has a positive, though modest, association with infant mortality rate in this model. However, the R-squared value of 0.1002 indicates that only about 10% of the variation in infant mortality rate is explained by midwives density, implying other factors likely play a more substantial role.
+
+While the analysis reveals a counterintuitive positive association between midwives density and infant mortality rate, this does not imply a causal relationship. Many other important factors such as population size, poverty levels, access to healthcare, and every socioeconomic conditions likely influence infant mortality far more significantly.
+Therefore, we cannot conclude that an increase in midwives density directly affects infant mortality without accounting for these broader contextual variables.
+
 
