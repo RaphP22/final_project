@@ -206,7 +206,9 @@ situation_demo <- situation_demo %>%
   )
 ```
 
-Now we do the data cleaning and joining for the DRESS data about midwives :
+Now we do the data cleaning and joining for the DRESS data about midwives. Initially it was two different data sets an we wanted to make it one. 
+Moreover, the data sets were huge (68 000 ligns) since there was a lign for a lot of specific cases that didn't matter for our projet. For instance a lign only conserning male midwives between 30 and 34 years old in the liberal sector working in a private etablisment ESPIC. 
+We are only interested in the density and workforce by department.
 
 ```{r echo=FALSE}
 
@@ -266,7 +268,7 @@ midwives <- midwives %>%
   select(departement, effectif_2019, densite_2019)
 ```
 
-We import a dataset about the income and poverty rate per department in 2019.
+Then we use an INSEE data set about the income and poverty rate per department in 2019. The data had a lot of variables to specific to be studied here for instance the share of income from assets and other income. So we only kept the first colomns.
 
 ```{r echo=FALSE}
 
@@ -301,9 +303,9 @@ incomes <- incomes %>%
 
 ```
 
-
-Sorting the datasets in alphabetical order and adding a number to each departement.
-
+After importing our data sets, we have to make sure to have a matching colomn which will alow us to study, by department, the impact of the variables on infant mortality. 
+To do so, we sorting the datasets in alphabetical order and adding a number to each departement.
+Some names of department were issues so we changed them to have each department strarting by there actual first letter.
 
 ```{r echo=FALSE}
 
@@ -476,7 +478,7 @@ df_long <- data.frame(
     as.numeric(gsub(",", ".", incomes$`Taux.de.pauvreté.Ensemble....`))
   ),
   Indicateur = rep(
-    c("Mortalité infantile (‰)", "Taux de pauvreté (%)"), 
+    c("Infant mortality (‰)", "Poverty rate (%)"), 
     each = nrow(infant_mortality)
   )
 )
@@ -486,14 +488,15 @@ ggplot(df_long, aes(x = Indicateur, y = Valeur, fill = Indicateur)) +
   geom_jitter(width = 0.2, alpha = 0.3, size = 1.5) +
   scale_fill_manual(values = c("steelblue", "coral")) +
   labs(
-    title = "Distribution du taux de pauvreté et de la mortalité infantile (2019)",
-    x = "Indicateur",
-    y = "Valeur",
+    title = "Distribution of Poverty Rate and Infant Mortality (2019)",
+    x = "Indicator",
+    y = "Value",
     caption = "Source : INSEE & DREES"
   ) +
   theme_minimal(base_size = 12) +
   theme(legend.position = "none")
 ```
+
 This boxplot provides a comparison of the distribution of infant mortality rates (‰) and poverty rates (%) across French departments in 2019. 
 
 The blue boxplot shows that most departments have infant mortality rates clustered between approximately 2.5‰ and 4‰. The median rate is around 3.5‰. However, there are several outliers, with some departments experiencing rates as high as 10‰. These outliers suggest that certain areas face significantly higher infant mortality, potentially due to socio-economic factors or healthcare access issues.
@@ -527,15 +530,16 @@ ggplot(plot_data, aes(x = poverty_rate, y = infant_mortality_rate)) +
   theme_minimal()
 
 ```
+
 Now we can link those two variables. This scatter plot clearly shows a positive correlation between poverty rate and infant mortality rate in French departments for 2019.
 Most departments cluster in the lower-left corner, indicating lower poverty rates (below 20%) and lower infant mortality rates (below 5‰). However, as the poverty rate increases—especially beyond 40%—there is a noticeable upward trend in infant mortality rates, reaching up to 10‰ or more.
 The outliers in the top-right corner (departments with poverty rates above 60% and infant mortality rates above 7.5‰) underlines areas where socio-economic challenges likely contribute to poorer health outcomes. This reinforces the idea that reducing poverty could significantly improve infant survival rates.
 
+Then, we are going to make a linear regression. The aim of this step is to identify the variable which has the the biggest impact on infant mortality. First we start by creating the model we are going to use for this regression. 
 
 ```{r echo=FALSE}
 data_model <- data.frame(
   mortalite = infant_mortality$`Infantile (c)`,
-  revenu = incomes$median_income,
   age_birth = indicateurs_generaux$`Âge moyen à l'accouchement (a)`,
   pauvrete = incomes$`Taux de pauvreté`,
   hors_mariage = indicateurs_generaux$`Proportion de naissances hors mariage (a)`
@@ -546,14 +550,15 @@ data_model <- data.frame(
 kable(round(cor(data_model), 3))
 ```
 
-The analysis reveals that poverty has a strong positive correlation (0.584) with infant mortality, confirming that departments with higher poverty rates consistently exhibit worse infant health outcomes. Conversely, median income shows a moderate negative correlation (-0.461), suggesting that wealthier departments benefit from better healthcare access and resources. Maternal age and births outside marriage display only weak correlations (-0.072 and 0.208, respectively), indicating their limited impact compared to socio-economic factors like poverty and income.
+We did a correlation table to see if any independent variable are correlated. We can see that the age of the mother when giving birth is highly negatively correlated with the proportion of child born out of wedlock. We would have to keep that in mind of any of this two variable has a big impact on the analysed variable.
 
 ```{r echo=FALSE}
 # regression
 
-model1 <- lm(mortalite ~ revenu + age_birth + pauvrete + hors_mariage, data = data_model)
+model1 <- lm(mortalite ~ age_birth + pauvrete + hors_mariage, data = data_model)
 summary(model1)
 ```
+
 We ran a regression to see what really impacts infant mortality rates. Turns out, poverty is the big one—it’s statistically significant (p = 0.001) and has a positive effect. Basically, the higher the poverty rate in a department, the higher the infant mortality. For every 1% increase in poverty, infant mortality goes up by about 0.14‰. That’s a pretty clear sign that economic conditions matter a lot.
 The other factors—like income, maternal age, and births outside marriage —don’t show a significant impact here. That was a bit surprising, especially since income seemed important in the correlation table, but I guess poverty is the stronger driver.
 The model explains about 33% of the variation in infant mortality (Adjusted R-squared = 0.33), which shows that socio-economic factors play a big role. There’s probably more to the story, like access to healthcare or local policies, but this is a solid starting point. The low p-value (8.719e-09) confirms the overall significance of the model.
@@ -652,6 +657,7 @@ ggplot(midwives_plot_data,
     legend.position = "right"
   )
 ```
+
 Now let's illustrate the relationship between midwife effectif (represented by the size of the circles) and infant mortality rates in French departments.
 
 The dashed regression line indicates a slight positive trend, suggesting that departments with more midwives do not necessarily have lower infant mortality rates. This implies that simply having more midwives may not directly translate to better infant health outcomes. There is no strong impact.
@@ -683,6 +689,43 @@ ggplot(midwives_plot_data, aes(x = densite_2019)) +
 Let's illustrates how midwives were distributed across different departments in France during 2019.
 The majority of departments had a midwife density clustered between approximately 150 and 180, which appears to be the most common range. The curve peaks here, showing where most departments lie in terms of midwife availability.
 This curve looks like a normal distribution, with a clear central peak and tails that gradually taper off toward the extreme values.
+
+Now we analyse with a tendance curve.
+
+```{r echo=FALSE}
+#| message: false
+#| warning: false
+
+data <- infant_mortality %>%
+  left_join(midwives, by = "number") %>%
+  left_join(incomes, by = "number")
+
+ggplot(data, aes(x = median_income, y = `Infantile (c)`, color = densite_2019, size = densite_2019)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "loess", se = FALSE, color = "darkred", formula = y ~ x) +  
+  labs(
+    title = "Relation between infant mortality rate and median income",
+    x = "Median income",
+    y = "Infant mortality rate",
+    color = "midwives density",
+    size = "midwives density"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+```
+```{r echo=FALSE}
+seuil_revenu <- 15000
+seuil_mortalite <- 5
+
+departements_extremes <- data %>%
+  filter(median_income < seuil_revenu, `Infantile (c)` > seuil_mortalite) %>%
+  arrange(`Infantile (c)`) %>%
+  select(number, departement, `Infantile (c)`, median_income, densite_2019)
+
+departements_extremes
+```
+
 
 ```{r echo=FALSE}
 # Linear regression: Infant mortality ~ Midwives density
